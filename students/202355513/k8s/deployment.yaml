@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lunch-vote
+  labels:
+    app: lunch-vote
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: lunch-vote
+
+  template:
+    metadata:
+      labels:
+        app: lunch-vote
+
+    spec:
+      containers:
+        - name: lunch-vote
+          image: registry.access.redhat.com/ubi9/python-312:latest
+
+          command:
+            - python
+            - /app/app.py
+
+          ports:
+            - containerPort: 8080
+
+          env:
+            - name: POLL_QUESTION
+              valueFrom:
+                configMapKeyRef:
+                  name: lunch-vote-config
+                  key: POLL_QUESTION
+
+            - name: POLL_OPTIONS
+              valueFrom:
+                configMapKeyRef:
+                  name: lunch-vote-config
+                  key: POLL_OPTIONS
+
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lunch-vote-secret
+                  key: ADMIN_PASSWORD
+
+          volumeMounts:
+            - name: app-code
+              mountPath: /app/app.py
+              subPath: app.py
+
+            - name: vote-data
+              mountPath: /data
+
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 2
+            failureThreshold: 15
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+
+      volumes:
+        - name: app-code
+          configMap:
+            name: lunch-vote-config
+
+        - name: vote-data
+          persistentVolumeClaim:
+            claimName: lunch-vote-data
