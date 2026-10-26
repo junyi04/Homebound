@@ -161,6 +161,12 @@ PVC   : Bound
 Route : 정상 생성
 ```
 
+### 서비스 접속
+
+배포된 Lunch Vote 서비스는 아래 Route 주소에서 확인할 수 있습니다.
+
+[Lunch Vote 실행 화면](https://lunch-vote-skygang-dev.apps.rm1.0a51.p1.openshiftapps.com/)
+
 ---
 
 ## 6. 실행 화면
