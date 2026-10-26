@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lunch-vote-config
+data:
+  POLL_QUESTION: "오늘 점심 뭐 먹을까?"
+  POLL_OPTIONS: "한식,중식,일식,양식"

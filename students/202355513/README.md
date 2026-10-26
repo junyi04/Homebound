@@ -1,5 +1,6 @@
-## 2. 아키텍처
+## 아키텍처
 
+```text
 사용자
   ↓
 Route
@@ -10,6 +11,7 @@ Lunch Vote Pod
   ├─ ConfigMap: 투표 질문 및 선택지 설정
   ├─ Secret: 관리자 비밀번호
   └─ PVC: 투표 결과 데이터 저장
+```
 
 ### 사용 Object
 - Deployment: Lunch Vote 애플리케이션 실행
