@@ -46,6 +46,7 @@ test('mobile touch controls and administrator authentication',async({page})=>{
   await expect(page.locator('#distance')).toContainText('1');
   await page.locator('#pause').click();
   await expect(page.locator('#paused')).toBeVisible();
+  await page.locator('#exit-focus').click();
   await page.locator('#admin-open').click();
   await page.locator('#admin-password').fill('wrong');
   await page.locator('#admin-confirm').check();

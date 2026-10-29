@@ -6,6 +6,36 @@ let x = 4, row = 0, distance = 0, cards = 0, elapsed = 0, lastProgress = 0, last
 let shield = false, boostUntil = 0, invincibleUntil = 0, effectUntil = 0, camera = 0, visualX = 4, visualRow = 0;
 let collected = new Set(), lanes = new Map(), lastFrame = 0, previewTime = 0, sound = false, audio;
 let best = 0, rankRequest = 0;
+const shell = $('game-shell');
+const lobbyElements = document.querySelectorAll('.header, .intro, aside, .notes, footer');
+let focused = false, nativeFullscreen = false;
+function setFocused(value) {
+  focused = value;
+  document.body.classList.toggle('is-playing', value);
+  shell.classList.toggle('is-focused', value);
+  lobbyElements.forEach(element => { element.inert = value; });
+  if (!value && document.fullscreenElement === shell) document.exitFullscreen().catch(() => {});
+}
+function showLobby() {
+  pause();
+  setFocused(false);
+  if (phase === 'paused') $('resume').focus({preventScroll:true});
+  else if (phase === 'over') $('back').focus({preventScroll:true});
+}
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement === shell) await document.exitFullscreen();
+    else if (shell.requestFullscreen && document.fullscreenEnabled) await shell.requestFullscreen();
+    else toast('이 브라우저에서는 현재 크기의 게임 화면을 사용해 주세요.', 4);
+  } catch { toast('전체화면을 열 수 없어요. 현재 화면에서 계속 즐겨 주세요.', 4); }
+}
+document.addEventListener('fullscreenchange', () => {
+  const active = document.fullscreenElement === shell;
+  $('fullscreen').setAttribute('aria-pressed', String(active));
+  $('fullscreen').querySelector('span').textContent = active ? '전체화면 해제' : '전체화면';
+  if (nativeFullscreen && !active) showLobby();
+  nativeFullscreen = active;
+});
 try { best = Number(localStorage.getItem('homebound-best')) || 0; $('nickname').value = localStorage.getItem('homebound-name') || ''; } catch {}
 $('best').innerHTML = `내 최고 <b>${best}</b>`;
 async function api(path, options = {}) {
@@ -48,13 +78,15 @@ function setMode(next) {
 async function start() {
   if (phase === 'starting') return;
   phase = 'starting'; $('start-error').textContent = ''; $('save-message').textContent = ''; $('start').disabled = true; $('retry').disabled = true;
+  $('exit-focus').disabled = true;
+  setFocused(true);
   try {
     run = await api('/api/runs',{method:'POST',body:JSON.stringify({mode})}); config = run.config;
     x=4;row=0;distance=0;cards=0;elapsed=0;lastProgress=0;lastMove=-1;camera=0;visualX=4;visualRow=0;shield=false;boostUntil=0;invincibleUntil=0;collected=new Set();lanes=new Map();
     $('welcome').hidden=true; $('result').hidden=true; $('paused').hidden=true; $('pause').hidden=false; $('deadline').hidden=false; $('effect').textContent=''; $('save').disabled=false; $('save-form').hidden=false;
     $('daily').disabled=true; $('endless').disabled=true; phase='playing'; updateHUD(); canvas.focus({preventScroll:true}); beep(660,.1);
-  } catch (error) { phase='welcome'; $('result').hidden=true; $('welcome').hidden=false; $('start-error').textContent=`출발 준비 실패: ${error.message} 다시 눌러 주세요.`; }
-  finally { $('start').disabled=false; $('retry').disabled=false; }
+  } catch (error) { phase='welcome'; setFocused(false); $('daily').disabled=false; $('endless').disabled=false; $('result').hidden=true; $('welcome').hidden=false; $('start-error').textContent=`출발 준비 실패: ${error.message} 다시 눌러 주세요.`; }
+  finally { $('start').disabled=false; $('retry').disabled=false; $('exit-focus').disabled=false; }
 }
 function finish(reason) {
   if (phase!=='playing') return;
@@ -65,13 +97,14 @@ function finish(reason) {
   $('best').innerHTML=`내 최고 <b>${best}</b>`; beep(150,.25); $('nickname').focus({preventScroll:true});
 }
 function pause() { if(phase==='playing'){phase='paused';$('paused').hidden=false;$('resume').focus({preventScroll:true});} }
-function resume() { if(phase==='paused'){phase='playing';$('paused').hidden=true;canvas.focus({preventScroll:true});} }
+function resume() { if(phase==='paused'){setFocused(true);phase='playing';$('paused').hidden=true;canvas.focus({preventScroll:true});} }
 function move(direction) {
-  if(phase!=='playing' || elapsed-lastMove < (elapsed<boostUntil?.115:.17)) return;
+  const inputTime = performance.now() / 1000;
+  if(phase!=='playing' || inputTime-lastMove < (elapsed<boostUntil?.115:.17)) return;
   const [dx,dy]={up:[0,1],down:[0,-1],left:[-1,0],right:[1,0]}[direction];
   const nextX=x+dx,nextRow=row+dy;
   if(nextX<0 || nextX>8 || nextRow<Math.max(0,distance-5)) return;
-  x=nextX;row=nextRow;lastMove=elapsed;
+  x=nextX;row=nextRow;lastMove=inputTime;
   if(row>distance){distance=row;lastProgress=elapsed;}
   const l=getLane(row);
   if(l.item && l.itemX===x && !collected.has(row)){
@@ -159,10 +192,11 @@ function render(dt){
 }
 function frame(timestamp){const dt=Math.min((timestamp-lastFrame)/1000||0,.05);lastFrame=timestamp;if(phase==='playing')tick(dt);if(phase==='welcome'||phase==='starting')previewTime+=dt;render(dt);requestAnimationFrame(frame);}
 $('start').onclick=start;$('retry').onclick=start;$('pause').onclick=pause;$('resume').onclick=resume;
+$('exit-focus').onclick=showLobby;$('fullscreen').onclick=toggleFullscreen;
 $('daily').onclick=()=>setMode('daily');$('endless').onclick=()=>setMode('endless');$('refresh').onclick=refreshRanking;
-$('back').onclick=()=>{phase='welcome';run=null;lanes.clear();row=0;distance=0;cards=0;x=4;camera=0;shield=false;invincibleUntil=0;$('result').hidden=true;$('welcome').hidden=false;$('daily').disabled=false;$('endless').disabled=false;updateHUD();$('start').focus({preventScroll:true});};
+$('back').onclick=()=>{phase='welcome';setFocused(false);run=null;lanes.clear();row=0;distance=0;cards=0;x=4;camera=0;shield=false;invincibleUntil=0;$('result').hidden=true;$('welcome').hidden=false;$('daily').disabled=false;$('endless').disabled=false;updateHUD();$('start').focus({preventScroll:true});};
 $('sound').onclick=()=>{sound=!sound;$('sound').setAttribute('aria-pressed',String(sound));$('sound').querySelector('span').textContent=sound?'ON':'OFF';$('sound').title=sound?'효과음 끄기':'효과음 켜기';beep(700);};
-document.addEventListener('keydown',event=>{if(['INPUT','TEXTAREA'].includes(event.target.tagName)||$('admin-dialog').open)return;const key=event.key.toLowerCase(),directions={arrowup:'up',w:'up',arrowdown:'down',s:'down',arrowleft:'left',a:'left',arrowright:'right',d:'right'};if(directions[key]&&phase==='playing'){event.preventDefault();move(directions[key]);}if(key==='p'||key==='escape'){if(phase==='playing')pause();else if(phase==='paused')resume();}});
+document.addEventListener('keydown',event=>{if($('admin-dialog').open)return;const key=event.key.toLowerCase();if(key==='escape'&&focused&&!document.fullscreenElement){event.preventDefault();showLobby();return;}if(['INPUT','TEXTAREA'].includes(event.target.tagName))return;const directions={arrowup:'up',w:'up',arrowdown:'down',s:'down',arrowleft:'left',a:'left',arrowright:'right',d:'right'};if(directions[key]&&phase==='playing'){event.preventDefault();move(directions[key]);}if(key==='p'&&!event.repeat){if(phase==='playing')pause();else if(phase==='paused')resume();}});
 document.querySelectorAll('[data-move]').forEach(button=>button.addEventListener('pointerdown',event=>{event.preventDefault();move(button.dataset.move);}));
 let touchStart=null;canvas.addEventListener('pointerdown',event=>{touchStart=[event.clientX,event.clientY];});canvas.addEventListener('pointerup',event=>{if(!touchStart)return;const dx=event.clientX-touchStart[0],dy=event.clientY-touchStart[1];touchStart=null;if(Math.max(Math.abs(dx),Math.abs(dy))<15)move('up');else move(Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up');});canvas.addEventListener('pointercancel',()=>touchStart=null);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});

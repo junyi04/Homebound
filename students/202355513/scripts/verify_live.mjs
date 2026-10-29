@@ -10,6 +10,8 @@ try{
   if(response.status()!==200)throw new Error(`Unexpected response ${response.status()}`);
   await page.locator('#start').click();
   await page.locator('#welcome').waitFor({state:'hidden'});
+  const focused = await page.locator('#game-shell').evaluate(el=>el.classList.contains('is-focused'));
+  if(!focused)throw new Error('Game did not enter viewport mode');
   await page.keyboard.press('ArrowUp');
   await page.waitForTimeout(220);
   await page.keyboard.press('ArrowUp');
@@ -21,7 +23,10 @@ try{
   await page.locator('#paused').waitFor({state:'visible'});
   await page.keyboard.press('p');
   await page.locator('#paused').waitFor({state:'hidden'});
+  await page.keyboard.press('Escape');
+  await page.locator('#paused').waitFor({state:'visible'});
+  if(await page.locator('#game-shell').evaluate(el=>el.classList.contains('is-focused')))throw new Error('Escape did not return to lobby');
   if(errors.length)throw new Error(errors.join('\n'));
-  await writeFile('evidence/live-browser.json',JSON.stringify({verified_at:new Date().toISOString(),url,http_status:response.status(),movement:distance,keyboard_pause_resume:'passed',page_errors:errors},null,2)+'\n');
+  await writeFile('evidence/live-browser.json',JSON.stringify({verified_at:new Date().toISOString(),url,http_status:response.status(),movement:distance,keyboard_pause_resume:'passed',viewport_mode:'passed',escape_to_lobby:'passed',page_errors:errors},null,2)+'\n');
   console.log('PASS: deployed HTTPS game renders, moves and pauses in Chrome.');
 }finally{await browser.close();}
