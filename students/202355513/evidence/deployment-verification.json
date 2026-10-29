@@ -1,0 +1,33 @@
+{
+  "verified_at": "2026-10-29T14:51:37.442112+00:00",
+  "route": "https://homebound-skygang-dev.apps.rm1.0a51.p1.openshiftapps.com",
+  "clean_redeploy": true,
+  "https_readiness": "passed",
+  "score_saved": {
+    "score": 20
+  },
+  "old_pod_uid": "225b4d28-ccc6-4051-a58a-7449b6967b85",
+  "new_pod_uid": "0a13cd51-24da-42d5-938f-443ebca6099b",
+  "pvc_persistence": "passed",
+  "leaderboard_before": {
+    "entries": [
+      {
+        "name": "배포검증",
+        "score": 20,
+        "distance": 2
+      }
+    ],
+    "day": "2026-10-29"
+  },
+  "leaderboard_after": {
+    "entries": [
+      {
+        "name": "배포검증",
+        "score": 20,
+        "distance": 2
+      }
+    ],
+    "day": "2026-10-29"
+  },
+  "running_image": "registry.access.redhat.com/ubi9/python-312@sha256:2c7a89f9f1e69f2a00036041ef744b45c8830bebcb2f7194f403ca93729bb0cc"
+}

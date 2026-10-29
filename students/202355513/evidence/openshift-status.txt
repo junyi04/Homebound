@@ -1,0 +1,52 @@
+$ oc delete -f k8s/ --ignore-not-found --wait=true --timeout=90s
+configmap "homebound-app" deleted from skygang-dev namespace
+configmap "homebound-config" deleted from skygang-dev namespace
+deployment.apps "homebound" deleted from skygang-dev namespace
+persistentvolumeclaim "homebound-data" deleted from skygang-dev namespace
+route.route.openshift.io "homebound" deleted from skygang-dev namespace
+secret "homebound-secret" deleted from skygang-dev namespace
+service "homebound" deleted from skygang-dev namespace
+
+$ oc apply -f k8s/
+configmap/homebound-app created
+configmap/homebound-config created
+deployment.apps/homebound created
+persistentvolumeclaim/homebound-data created
+route.route.openshift.io/homebound created
+secret/homebound-secret created
+service/homebound created
+
+$ oc rollout status deployment/homebound --timeout=120s
+Waiting for deployment "homebound" rollout to finish: 0 of 1 updated replicas are available...
+deployment "homebound" successfully rolled out
+
+$ oc get route homebound -o jsonpath={.spec.host}
+homebound-skygang-dev.apps.rm1.0a51.p1.openshiftapps.com
+
+$ oc get pod -l app=homebound -o jsonpath={.items[0].metadata.uid}
+225b4d28-ccc6-4051-a58a-7449b6967b85
+
+$ oc delete pod -l app=homebound --wait=true --timeout=60s
+pod "homebound-86b8cc546b-jfx7v" deleted from skygang-dev namespace
+
+$ oc rollout status deployment/homebound --timeout=120s
+deployment "homebound" successfully rolled out
+
+$ oc get pod -l app=homebound -o jsonpath={.items[0].metadata.uid}
+0a13cd51-24da-42d5-938f-443ebca6099b
+
+$ oc get deployment,pod,service,route,pvc -l app=homebound -o wide
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES                                              SELECTOR
+deployment.apps/homebound   1/1     1            1           65s   homebound    registry.access.redhat.com/ubi9/python-312:latest   app=homebound
+
+NAME                             READY   STATUS    RESTARTS   AGE   IP              NODE                          NOMINATED NODE   READINESS GATES
+pod/homebound-86b8cc546b-2bvct   1/1     Running   0          44s   10.128.27.206   ip-10-0-37-251.ec2.internal   <none>           <none>
+
+NAME                TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE   SELECTOR
+service/homebound   ClusterIP   172.30.2.185   <none>        8080/TCP   63s   app=homebound
+
+NAME                                 HOST/PORT                                                  PATH   SERVICES    PORT   TERMINATION     WILDCARD
+route.route.openshift.io/homebound   homebound-skygang-dev.apps.rm1.0a51.p1.openshiftapps.com          homebound   http   edge/Redirect   None
+
+NAME                                   STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE   VOLUMEMODE
+persistentvolumeclaim/homebound-data   Bound    pvc-cb46be05-ed49-4df6-9af3-10f049689db6   1Gi        RWO            gp3            <unset>                 66s   Filesystem

@@ -1,12 +1,23 @@
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: lunch-vote
-spec:
-  to:
-    kind: Service
-    name: lunch-vote
-  port:
-    targetPort: http
-  tls:
-    termination: edge
+{
+  "apiVersion": "route.openshift.io/v1",
+  "kind": "Route",
+  "metadata": {
+    "name": "homebound",
+    "labels": {
+      "app": "homebound"
+    }
+  },
+  "spec": {
+    "to": {
+      "kind": "Service",
+      "name": "homebound"
+    },
+    "port": {
+      "targetPort": "http"
+    },
+    "tls": {
+      "termination": "edge",
+      "insecureEdgeTerminationPolicy": "Redirect"
+    }
+  }
+}
