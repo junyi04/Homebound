@@ -1,0 +1,23 @@
+2026-10-29T15:50:43.254423+00:00
+
+$ oc get deployment,pod,replicaset,service,route,pvc -l app=homebound --request-timeout=15s
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/homebound   1/1     1            1           60m
+
+NAME                             READY   STATUS    RESTARTS   AGE
+pod/homebound-6dc7f798b7-gl55n   1/1     Running   0          10m
+
+NAME                                   DESIRED   CURRENT   READY   AGE
+replicaset.apps/homebound-6dc7f798b7   1         1         1       10m
+replicaset.apps/homebound-84cfff7995   0         0         0       24m
+replicaset.apps/homebound-86b8cc546b   0         0         0       60m
+
+NAME                TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+service/homebound   ClusterIP   172.30.2.185   <none>        8080/TCP   60m
+
+NAME                                 HOST/PORT                                                  PATH   SERVICES    PORT   TERMINATION     WILDCARD
+route.route.openshift.io/homebound   homebound-skygang-dev.apps.rm1.0a51.p1.openshiftapps.com          homebound   http   edge/Redirect   None
+
+NAME                                   STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/homebound-data   Bound    pvc-cb46be05-ed49-4df6-9af3-10f049689db6   1Gi        RWO            gp3            <unset>                 60m
+
