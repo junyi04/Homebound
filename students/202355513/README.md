@@ -177,7 +177,9 @@ npx playwright test
 
 ## 7. AI와 참고자료
 
-기획 정리, 게임과 서버 코드 작성, YAML 구성, 테스트와 동작 검증에 ChatGPT와 Codex를 사용했습니다. 생성된 코드는 로컬에서 실행하고 본인 Sandbox 계정에 배포해 확인했습니다. 배포 및 재현성 검증 결과는 `evidence/`에 기록했습니다.
+길건너 친구들을 바탕으로 한 게임이라는 주제와 전체화면 플레이, 헤더 없는 화면 구성, 기본 배경음·효과음 등 주요 방향은 직접 정했습니다. 원하는 플레이 방식과 화면 구성을 구체적으로 요청하며 수정 방향을 잡았습니다.
+
+ChatGPT와 Codex는 초기 기획의 틀을 정리하고, 게임·서버 코드와 배포 YAML을 작성하며, 테스트와 동작을 검증하는 데 활용했습니다. 완성된 결과는 로컬과 본인 Sandbox 환경에서 실행했으며, 배포와 데이터 보존 확인 결과는 `evidence/`에 남겼습니다.
 
 - 수업 과제 안내: 부산대학교 「제5강 과제안내 — 나만의 컨테이너 만들기」
 - [Kubernetes ConfigMap](https://kubernetes.io/docs/concepts/configuration/configmap/)
