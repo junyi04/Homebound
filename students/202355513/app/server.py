@@ -99,7 +99,8 @@ class Handler(BaseHTTPRequestHandler):
         files = {'/': ('index.html', 'text/html; charset=utf-8'),
                  '/style.css': ('style.css', 'text/css; charset=utf-8'),
                  '/game.js': ('game.js', 'text/javascript; charset=utf-8'),
-                 '/engine.js': ('engine.js', 'text/javascript; charset=utf-8')}
+                 '/engine.js': ('engine.js', 'text/javascript; charset=utf-8'),
+                 '/audio.js': ('audio.js', 'text/javascript; charset=utf-8')}
         if url.path in files:
             filename, mime = files[url.path]
             return self.send(200, (ROOT / filename).read_bytes(), mime)

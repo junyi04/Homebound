@@ -17,7 +17,7 @@ def probe(path, period, failures):
 def build():
     K8S.mkdir(exist_ok=True)
     assets = {name: (ROOT / 'app' / name).read_text(encoding='utf-8')
-              for name in ['server.py', 'index.html', 'style.css', 'engine.js', 'game.js']}
+              for name in ['server.py', 'index.html', 'style.css', 'engine.js', 'game.js', 'audio.js']}
     write('app-configmap.yaml', resource('ConfigMap', 'homebound-app', data=assets))
     write('configmap.yaml', resource('ConfigMap', 'homebound-config', data={
         'GAME_TITLE': '집 가는 길', 'DEADLINE_SECONDS': '18', 'TRAFFIC_SPEED': '1', 'PORT': '8080'}))

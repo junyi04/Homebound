@@ -55,7 +55,7 @@ class ServerTests(unittest.TestCase):
             return response.status, json.loads(data) if response.headers['Content-Type'].startswith('application/json') else data
 
     def test_health_static_and_path_traversal(self):
-        for path in ['/health/live', '/health/ready', '/', '/game.js', '/engine.js', '/style.css']:
+        for path in ['/health/live', '/health/ready', '/', '/game.js', '/engine.js', '/audio.js', '/style.css']:
             self.assertEqual(self.request(path)[0], 200)
         self.assertEqual(self.request('/../server.py')[0], 404)
 

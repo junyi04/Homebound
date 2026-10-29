@@ -1,13 +1,15 @@
 import {lane, obstacles, collision, score, random} from './engine.js';
+import {GameAudio} from './audio.js';
 const $ = id => document.getElementById(id);
 const canvas = $('game'), ctx = canvas.getContext('2d');
 let mode = 'daily', phase = 'welcome', run = null, config = {deadlineSeconds:18,trafficSpeed:1};
 let x = 4, row = 0, distance = 0, cards = 0, elapsed = 0, lastProgress = 0, lastMove = -1;
 let shield = false, boostUntil = 0, invincibleUntil = 0, effectUntil = 0, camera = 0, visualX = 4, visualRow = 0;
-let collected = new Set(), lanes = new Map(), lastFrame = 0, previewTime = 0, sound = false, audio;
+let collected = new Set(), lanes = new Map(), lastFrame = 0, previewTime = 0;
+const audio = new GameAudio();
 let best = 0, rankRequest = 0;
 const shell = $('game-shell');
-const lobbyElements = document.querySelectorAll('.header, .intro, aside, .notes, footer');
+const lobbyElements = document.querySelectorAll('.intro, aside, .notes, footer');
 let focused = false, nativeFullscreen = false;
 function setFocused(value) {
   focused = value;
@@ -45,8 +47,7 @@ async function api(path, options = {}) {
   return data;
 }
 function beep(freq = 440, duration = .06) {
-  if (!sound) return;
-  try { audio ||= new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); const oscillator = audio.createOscillator(), gain = audio.createGain(); oscillator.type = 'sine'; oscillator.frequency.value = freq; gain.gain.setValueAtTime(.045,audio.currentTime); gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration); oscillator.connect(gain).connect(audio.destination); oscillator.start(); oscillator.stop(audio.currentTime+duration); } catch {}
+  audio.effect(freq, duration);
 }
 function toast(message, seconds = 2) { $('effect').textContent = message; effectUntil = elapsed + seconds; }
 function getLane(r) { if (!lanes.has(r)) lanes.set(r,lane(run?.seed || 1729,r)); return lanes.get(r); }
@@ -77,6 +78,7 @@ function setMode(next) {
 }
 async function start() {
   if (phase === 'starting') return;
+  audio.unlock();
   phase = 'starting'; $('start-error').textContent = ''; $('save-message').textContent = ''; $('start').disabled = true; $('retry').disabled = true;
   $('exit-focus').disabled = true;
   setFocused(true);
@@ -84,20 +86,21 @@ async function start() {
     run = await api('/api/runs',{method:'POST',body:JSON.stringify({mode})}); config = run.config;
     x=4;row=0;distance=0;cards=0;elapsed=0;lastProgress=0;lastMove=-1;camera=0;visualX=4;visualRow=0;shield=false;boostUntil=0;invincibleUntil=0;collected=new Set();lanes=new Map();
     $('welcome').hidden=true; $('result').hidden=true; $('paused').hidden=true; $('pause').hidden=false; $('deadline').hidden=false; $('effect').textContent=''; $('save').disabled=false; $('save-form').hidden=false;
-    $('daily').disabled=true; $('endless').disabled=true; phase='playing'; updateHUD(); canvas.focus({preventScroll:true}); beep(660,.1);
+    $('daily').disabled=true; $('endless').disabled=true; phase='playing'; audio.setPlaying(true); updateHUD(); canvas.focus({preventScroll:true}); beep(660,.1);
   } catch (error) { phase='welcome'; setFocused(false); $('daily').disabled=false; $('endless').disabled=false; $('result').hidden=true; $('welcome').hidden=false; $('start-error').textContent=`출발 준비 실패: ${error.message} 다시 눌러 주세요.`; }
   finally { $('start').disabled=false; $('retry').disabled=false; $('exit-focus').disabled=false; }
 }
 function finish(reason) {
   if (phase!=='playing') return;
+  audio.setPlaying(false);
   phase='over'; $('pause').hidden=true; $('deadline').hidden=true; $('effect').textContent=''; $('result').hidden=false;
   $('reason').textContent=reason; $('final-score').textContent=score(distance,cards).toLocaleString(); $('final-distance').textContent=`${distance}m 걸음 · 학생증 ${cards}개 수집`;
   $('result-title').textContent = distance >= 65 ? '귀가의 달인 인정!' : distance >= 30 ? '집이 보일 뻔했는데!' : '오늘의 귀가 종료!';
   best=Math.max(best,score(distance,cards)); try { localStorage.setItem('homebound-best',String(best)); } catch {}
   $('best').innerHTML=`내 최고 <b>${best}</b>`; beep(150,.25); $('nickname').focus({preventScroll:true});
 }
-function pause() { if(phase==='playing'){phase='paused';$('paused').hidden=false;$('resume').focus({preventScroll:true});} }
-function resume() { if(phase==='paused'){setFocused(true);phase='playing';$('paused').hidden=true;canvas.focus({preventScroll:true});} }
+function pause() { if(phase==='playing'){phase='paused';audio.setPlaying(false);$('paused').hidden=false;$('resume').focus({preventScroll:true});} }
+function resume() { if(phase==='paused'){audio.unlock();setFocused(true);phase='playing';audio.setPlaying(true);$('paused').hidden=true;canvas.focus({preventScroll:true});} }
 function move(direction) {
   const inputTime = performance.now() / 1000;
   if(phase!=='playing' || inputTime-lastMove < (elapsed<boostUntil?.115:.17)) return;
@@ -195,7 +198,7 @@ $('start').onclick=start;$('retry').onclick=start;$('pause').onclick=pause;$('re
 $('exit-focus').onclick=showLobby;$('fullscreen').onclick=toggleFullscreen;
 $('daily').onclick=()=>setMode('daily');$('endless').onclick=()=>setMode('endless');$('refresh').onclick=refreshRanking;
 $('back').onclick=()=>{phase='welcome';setFocused(false);run=null;lanes.clear();row=0;distance=0;cards=0;x=4;camera=0;shield=false;invincibleUntil=0;$('result').hidden=true;$('welcome').hidden=false;$('daily').disabled=false;$('endless').disabled=false;updateHUD();$('start').focus({preventScroll:true});};
-$('sound').onclick=()=>{sound=!sound;$('sound').setAttribute('aria-pressed',String(sound));$('sound').querySelector('span').textContent=sound?'ON':'OFF';$('sound').title=sound?'효과음 끄기':'효과음 켜기';beep(700);};
+$('sound').onclick=()=>{audio.setEnabled(!audio.enabled);$('sound').setAttribute('aria-pressed',String(audio.enabled));$('sound').querySelector('span').textContent=audio.enabled?'ON':'OFF';$('sound').title=audio.enabled?'배경음과 효과음 끄기':'배경음과 효과음 켜기';$('sound').setAttribute('aria-label',$('sound').title);};
 document.addEventListener('keydown',event=>{if($('admin-dialog').open)return;const key=event.key.toLowerCase();if(key==='escape'&&focused&&!document.fullscreenElement){event.preventDefault();showLobby();return;}if(['INPUT','TEXTAREA'].includes(event.target.tagName))return;const directions={arrowup:'up',w:'up',arrowdown:'down',s:'down',arrowleft:'left',a:'left',arrowright:'right',d:'right'};if(directions[key]&&phase==='playing'){event.preventDefault();move(directions[key]);}if(key==='p'&&!event.repeat){if(phase==='playing')pause();else if(phase==='paused')resume();}});
 document.querySelectorAll('[data-move]').forEach(button=>button.addEventListener('pointerdown',event=>{event.preventDefault();move(button.dataset.move);}));
 let touchStart=null;canvas.addEventListener('pointerdown',event=>{touchStart=[event.clientX,event.clientY];});canvas.addEventListener('pointerup',event=>{if(!touchStart)return;const dx=event.clientX-touchStart[0],dy=event.clientY-touchStart[1];touchStart=null;if(Math.max(Math.abs(dx),Math.abs(dy))<15)move('up');else move(Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up');});canvas.addEventListener('pointercancel',()=>touchStart=null);

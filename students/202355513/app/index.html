@@ -2,7 +2,6 @@
 <html lang="ko">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#151c18"><title>집 가는 길 · HOMEBOUND</title><link rel="stylesheet" href="/style.css"></head>
 <body>
-<header class="header"><a class="brand" href="/" aria-label="집 가는 길 홈"><span class="brand-icon">↗</span><span>HOMEBOUND<span class="brand-ko">집 가는 길</span></span></a><span class="header-label">A LITTLE CAMPUS ESCAPE</span><button id="sound" class="icon-button" aria-pressed="false" title="효과음 켜기">♪ <span>OFF</span></button></header>
 <main>
   <section class="intro"><div><div class="eyebrow"><span class="live-dot"></span> 수업 끝. 진짜 모험은 지금부터.</div><h1>오늘도 무사히,<br><span>집 가는 길.</span></h1><p>차는 피하고, 커피는 챙기고. 과제 마감보다 빠르게!<br>한 칸 더 가고 싶은 캠퍼스 탈출 아케이드.</p></div><div class="intro-stamp"><span>수업은 끝났다</span><strong>집에<br>가자!</strong><small>EST. AFTER CLASS</small></div></section>
   <div class="layout">
@@ -19,7 +18,7 @@
       <div class="overlay" id="paused" hidden><div class="welcome-card"><div class="ticket-label">TAKE A BREATHER</div><h2>잠깐 쉬어 가자.</h2><p>쉬는 동안은 마감도 기다려 줘요.</p><button id="resume" class="primary">계속 걷기 ↗</button></div></div>
       <div class="overlay" id="result" hidden><div class="welcome-card result-card"><div class="ticket-label">TODAY'S WALK RECEIPT</div><h2 id="result-title">오늘의 귀가 종료!</h2><p id="reason"></p><div class="receipt"><span>최종 점수</span><strong id="final-score">0</strong><small id="final-distance"></small></div><form id="save-form"><label for="nickname">랭킹에 남길 이름</label><div class="save-row"><input id="nickname" name="nickname" maxlength="12" placeholder="집가고싶은사람" required autocomplete="nickname"><button id="save" type="submit">기록 저장</button></div></form><p id="save-message" role="status"></p><button id="retry" class="primary">한 번만 더 <span>↻</span></button><button id="back" class="text-button">모드 선택으로 돌아가기</button></div></div>
     </div>
-    <div class="game-bottom"><span><b>↑ ← ↓ →</b> 이동 <i>·</i> <b>P</b> 쉬어가기</span><span id="best">내 최고 <b>0</b></span></div>
+    <div class="game-bottom"><span><b>↑ ← ↓ →</b> 이동 <i>·</i> <b>P</b> 쉬어가기</span><button id="sound" class="sound-toggle" aria-pressed="true" aria-label="배경음과 효과음 끄기" title="배경음과 효과음 끄기">♪ <span>ON</span></button><span id="best">내 최고 <b>0</b></span></div>
     <div class="touch-controls" aria-label="터치 이동"><button data-move="up" aria-label="앞으로">↑</button><div><button data-move="left" aria-label="왼쪽">←</button><button data-move="down" aria-label="뒤로">↓</button><button data-move="right" aria-label="오른쪽">→</button></div></div>
   </section>
   <aside>
